@@ -44,6 +44,16 @@ Bu repoda sadece:
 
 ---
 
+## Resimler
+
+<img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/refs/heads/main/ScreenShots/1.png"></img>
+<img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/refs/heads/main/ScreenShots/2.png"></img>
+<img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/refs/heads/main/ScreenShots/3.png"></img>
+<img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/refs/heads/main/ScreenShots/4.png"></img>
+<img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/refs/heads/main/ScreenShots/5.png"></img>
+<img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/refs/heads/main/ScreenShots/6.png"></img>
+
+
 ## 🛑 Uyarı
 
 Bu proje:
