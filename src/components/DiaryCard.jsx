@@ -7,6 +7,43 @@ import { doc, getDoc } from "firebase/firestore";
 
 import { likeDiary, addCommentToDiary } from "../services/userActions";
 import { getFirebaseAuth } from "../services/firebase";
+import { Timestamp } from "firebase/firestore";
+
+
+
+function toDate(timestamp) {
+
+  if (!timestamp) return null;
+
+  // Eğer Date objesi ise direkt dön
+  if (timestamp instanceof Date) return timestamp;
+
+  // Firestore Timestamp objesi ise toDate kullan
+  if (timestamp instanceof Timestamp) return timestamp.toDate();
+
+  // Eğer plain obje ise ve _seconds varsa Date objesi oluştur
+  if (timestamp._seconds !== undefined) {
+    return new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+  }
+
+  // Eğer toDate fonksiyonu varsa kullan
+  if (typeof timestamp.toDate === "function") return timestamp.toDate();
+
+  // Eğer seconds varsa (farklı formatta) dönüşüm yap
+  if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+
+  // String ise
+  if (typeof timestamp === "string") {
+    const d = new Date(timestamp);
+    if (!isNaN(d)) return d;
+  }
+
+  return null;
+}
+
+
+
+
 
 
 
@@ -22,7 +59,30 @@ export default function DiaryCard({ diary, self = false, currentUserId = null })
 
   const [hasLiked, setHasLiked] = useState(false);
 
+  const handleShare = async () => {
+    const shareUrl = `${window.location.origin}/diary/${diary.id}`;
+    const shareData = {
+      title: `${username}'in Günlüğü`,
+      text: diary.topic?.join(', ') || 'Bir günlük paylaşıyorum',
+      url: shareUrl
+    };
 
+    try {
+      // Native paylaşım API'sini dene
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        // Native destek yoksa URL'yi kopyala
+        await navigator.clipboard.writeText(shareUrl);
+        alert('Link kopyalandı!');
+      }
+    } catch (err) {
+      console.error('Paylaşım hatası:', err);
+      // Fallback olarak URL'yi kopyala
+      await navigator.clipboard.writeText(shareUrl);
+      alert('Link kopyalandı!');
+    }
+  };
 
   const handleLike = async () => {
     try {
@@ -96,9 +156,13 @@ export default function DiaryCard({ diary, self = false, currentUserId = null })
               {username || "Anonim Kullanıcı"} {diary.userId === currentUserId && !self ? "(sen)" : ""}
             </Link>
 
-            <p className="text-gray-500 dark:text-gray-400 text-sm">
-              {format(diary.createdAt.toDate(), "d MMMM yyyy, HH:mm", { locale: tr })}
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              {toDate(diary.createdAt)
+                ? format(toDate(diary.createdAt), "d MMMM yyyy, HH:mm", { locale: tr })
+                : "Tarih yok"}
             </p>
+
+
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -118,29 +182,38 @@ export default function DiaryCard({ diary, self = false, currentUserId = null })
             {diary.content}
           </p>
         </div>
-        {!false && (<div className="flex justify-between items-center">
-          <div className="flex space-x-4">
-            <div className="flex space-x-4 mt-4">
+        {!false && (
+          <div className="flex justify-between items-center">
+            <div className="flex space-x-4">
               <div className="flex space-x-4 mt-4">
-                <button
-                  onClick={handleLike}
-                  className={`transition ${hasLiked ? "text-red-600 dark:text-red-400" : "text-gray-500 hover:text-red-600 dark:hover:text-red-400"}`}
-                >
-                  {hasLiked ? "❤️" : "🤍"} {diaryData.likes?.length || 0}
-                </button>
+                <div className="flex space-x-4 mt-4">
+                  <button
+                    onClick={handleLike}
+                    className={`transition ${hasLiked ? "text-red-600 dark:text-red-400" : "text-gray-500 hover:text-red-600 dark:hover:text-red-400"}`}
+                  >
+                    {hasLiked ? "❤️" : "🤍"} {diaryData.likes?.length || 0}
+                  </button>
 
+                  <button
+                    onClick={() => setShowComments(!showComments)}
+                    className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
+                  >
+                    💬 {diaryData.comments?.length || 0}
+                  </button>
 
-                <button onClick={() => setShowComments(!showComments)} className="text-gray-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition">
-                  💬 {diaryData.comments?.length || 0}
-                </button>
+                  {/* Yeni eklenen paylaşım butonu */}
+                  <button
+                    onClick={handleShare}
+                    className="text-gray-500 hover:text-green-600 dark:hover:text-green-400 transition"
+                    title="Paylaş"
+                  >
+                    ↗️ Paylaş
+                  </button>
+                </div>
               </div>
-
             </div>
-
           </div>
-
-
-        </div>)}
+        )}
 
         {showComments && (
           <div className="mt-4 space-y-2">

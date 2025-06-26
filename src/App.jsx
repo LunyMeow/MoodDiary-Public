@@ -13,6 +13,7 @@ import UserSearch from "./pages/UserSearch";
 import Index from "./pages/Index";
 import MyInterests from "./pages/MyInterests";
 import CommunityStories from "./pages/CommunityStories";
+import Diary from "./pages/Diary";
 
 import { initializeFirebase } from "./services/firebase";
 
@@ -44,6 +45,8 @@ function App() {
           <Route path="/UserSearch" element={<UserSearch />} />
           <Route path="/MyInterests" element={<MyInterests/>}></Route>
           <Route path="/CommunityStories" element={<CommunityStories/>}></Route>
+          <Route path="/Diary/:diaryId" element={<Diary />} />
+
         </Routes>
       </div>
     </Router>

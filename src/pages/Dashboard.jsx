@@ -75,18 +75,15 @@ export default function Home() {
         }
 
         const fetchDiaries = async () => {
-            const q = query(collection(db, "diaries"), where("userId", "==", user.uid));
-            const querySnapshot = await getDocs(q);
-            const data = querySnapshot.docs.map((docSnap) => {
-                const docData = docSnap.data();
-                return {
-                    id: docSnap.id,
-                    ...docData,
-                    content: decrypt(docData.content, docData.aesPass), // doğru decryption
-                };
-            });
-
-            setDiaries(data);
+            if (!user) return;
+            try {
+                const fetchUserDiariesFn = httpsCallable(getFirebaseFunctions(), "fetchUserDiaries");
+                const res = await fetchUserDiariesFn();
+                const data = res.data.diaries || [];
+                setDiaries(data);
+            } catch (error) {
+                console.error("Günlükler alınamadı:", error);
+            }
         };
 
         const fetchUsername = async () => {

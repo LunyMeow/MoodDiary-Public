@@ -1,0 +1,51 @@
+# ========================
+# 🌲 LOG DOSYALARI
+# ========================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ========================
+# 📦 DERLENMİŞ VE CACHE DOSYALARI
+# ========================
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# ========================
+# 🔧 GELİŞTİRİCİ ARAÇLARI
+# ========================
+.vscode/*
+!.vscode/extensions.json   # uzantı önerileri korunsun
+.idea/
+.DS_Store
+
+# Visual Studio / JetBrains
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ========================
+# 🔐 GİZLİ ANAHTARLAR / KİŞİSEL AYARLAR
+# ========================
+.env                 # Gerçek anahtarları içerir
+
+
+
+
+# ========================
+# 🧱 PROJE DOKÜMANLARI
+# ========================
+project-structure.txt  # Yerel bilgi, Git'e eklenmesin
+
+# ========================
+# 🧼 ÖNEMLİ: Kendini ignore etmesin
+# ========================
+!.gitignore
