@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@import url('https://fonts.googleapis.com/css2?family=Berkshire+Swash&display=swap');
+
+
+:root {
+  font-family: cursive;
+  line-height: 1.5;
+  font-weight: 400;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* Açık tema renkleri */
+  --bg-color: #ffffff;
+  --text-color: #1f2937; /* gray-800 */
+  --link-color: #4f46e5; /* indigo-600 */
+  --link-hover: #4338ca; /* indigo-700 */
+  --button-bg: #4f46e5;
+  --button-hover: #4338ca;
+  --button-text: #ffffff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0f172a; /* slate-900 */
+    --text-color: #f8fafc; /* slate-50 */
+    --link-color: #818cf8; /* indigo-400 */
+    --link-hover: #a5b4fc; /* indigo-300 */
+    --button-bg: #818cf8;
+    --button-hover: #a5b4fc;
+    --button-text: #0f172a;
+  }
+}
+
+body {
+  @apply bg-white text-black dark:bg-gray-900 dark:text-white transition-colors duration-700;
+}
+
+a {
+  font-weight: 500;
+  color: var(--link-color);
+  text-decoration: inherit;
+  transition: color 0.2s;
+}
+a:hover {
+  color: var(--link-hover);
+}
+
+h1 {
+  font-size: 3.2em;
+  line-height: 1.1;
+}
+
+button {
+  border-radius: 8px;
+  border: none;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  cursor: pointer;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+button:hover {
+  background-color: var(--button-hover);
+}
+button:focus,
+button:focus-visible {
+  outline: 3px solid rgba(99, 102, 241, 0.5); /* indigo-500 */
+  outline-offset: 2px;
+}
+
+textarea {
+  font-family: "Berkshire Swash", serif;
+}
