@@ -63,5 +63,5 @@ Eğer proje hakkında geri bildirimde bulunmak isterseniz ya da bir konuda konu�
 ---
 
 > Teşekkürler!  
-> - Bedirhan Yasin Alparslan
+> - Bedirhan Alparslan
 
