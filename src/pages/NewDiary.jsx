@@ -5,9 +5,8 @@ import { useState } from "react";
 import { getFirebaseDB, getFirebaseAuth } from "../services/firebase"
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { getFirebaseFunctions } from "../services/firebase";
 
-import { httpsCallable } from "firebase/functions";
+import RedirectMessage from "../components/RedirectMessage";
 
 
 
@@ -23,12 +22,13 @@ export default function NewDiary() {
   const db = getFirebaseDB();
 
   const user = auth?.currentUser;
-  const functions = getFirebaseFunctions();
 
 
+  if (!auth.currentUser) {
+    return <RedirectMessage />;
+  }
 
-
-  const createDiary = httpsCallable(functions, "createDiary");
+  //const createDiary = httpsCallable(functions, "createDiary");
 
   const onSubmit = async (data) => {
     setIsSubmitting(true); // İşlem başladığında true yap
@@ -36,12 +36,33 @@ export default function NewDiary() {
       const user = auth.currentUser;
       if (!user) return;
 
-      const result = await createDiary({
-        content: data.content,
-        status: data.status,
+      //const result = await createDiary();
+
+
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const response = await fetch('https://creatediary-skz3ms2laq-uc.a.run.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Eğer fonksiyon auth gerektiriyorsa, token ekle
+          ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+        },
+        body: JSON.stringify({
+          content: data.content,
+          status: data.status,
+        })
+
       });
 
-      if (result.data?.success) {
+
+      //const result = await getInterests();
+
+      const dataRes = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
+
+
+
+      //console.log(JSON.stringify(dataRes));
+      if (dataRes.success) {
         navigate("/Dashboard");
       } else {
         alert("Bir hata oluştu.");
@@ -88,7 +109,7 @@ export default function NewDiary() {
         </button>
         <div className="flex justify-center mt-4">
           <Link to="/Dashboard">
-            <button className={`bg-blue-600 hover:bg-blue-900 text-white py-2 px-4 rounded ${isSubmitting ? 'opacity-50 cursor-not-allowed' : '' }`} disabled={isSubmitting}  >
+            <button className={`bg-blue-600 hover:bg-blue-900 text-white py-2 px-4 rounded ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`} disabled={isSubmitting}  >
               Ana Sayfa
             </button>
           </Link>

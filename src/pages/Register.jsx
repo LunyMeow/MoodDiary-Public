@@ -1,68 +1,62 @@
 import { useForm } from "react-hook-form";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { getFirebaseAuth, getFirebaseDB } from "../services/firebase"; // ⬅️ değiştirildi
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { doc, setDoc, getDocs, query, collection, where } from "firebase/firestore";
 import { Link } from "react-router-dom";
+import { httpsCallable } from "firebase/functions";
+import { getFirebaseAuth, getFirebaseFunctions } from "../services/firebase";
 
-
-function generateAESKey(length = 32) {
-  const charset = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=';
-  let key = '';
-  for (let i = 0; i < length; i++) {
-    key += charset.charAt(Math.floor(Math.random() * charset.length));
-  }
-  return key;
-}
-
+import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
 
 
 export default function Register() {
-
-  const { register, handleSubmit } = useForm();
+  const { register, handleSubmit, formState: { errors } } = useForm();
   const navigate = useNavigate();
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const functions = getFirebaseFunctions();
+  const auth = getFirebaseAuth();
+
 
   const onSubmit = async (data) => {
+    setLoading(true);
+    setError("");
+
     try {
-      const auth = getFirebaseAuth();
-      const db = getFirebaseDB();
+      // Firebase kullanıcı token'ını alma (gerekirse)
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
 
-      // Kullanıcı adı benzersiz mi kontrol et
-      const usernameQuery = await getDocs(
-        query(collection(db, "users"), where("username", "==", data.username))
-
-      );
-      if (!usernameQuery.empty) {
-        setError("Bu kullanıcı adı zaten alınmış.");
-        return;
-      }
-
-      // Firebase Auth ile kullanıcı oluştur
-      const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      const user = userCredential.user;
-
-      // Firestore'a kaydet
-      await setDoc(doc(db, "users", user.uid), {
-        username: data.username,
-        fullname: data.fullname,
-        email: data.email,
-        following: [],
-        followers: [],
-        blocked: [],
-        notifications: [],
-        profilePublic: true,
-        followRequests: [],
-        interests:[],
+      // HTTP POST isteği gönder (onRequest fonksiyonuna)
+      const response = await fetch('https://registeruser-skz3ms2laq-uc.a.run.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Eğer fonksiyon auth gerektiriyorsa, token ekle
+          ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+        },
+        body: JSON.stringify(data),
       });
 
-      navigate("/MyInterests");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Kayıt başarısız.');
+      }
 
+      const result = await response.json();
+
+      if (result.success) {
+        // Kayıt başarılıysa, otomatik giriş yap
+        await signInWithEmailAndPassword(auth, data.email, data.password);
+
+        // Yönlendirme
+        navigate(result.redirectUrl);
+      } else {
+        throw new Error('Kayıt sırasında hata oluştu.');
+      }
     } catch (err) {
-      console.error("Register Hata:", err.code, err.message);
-
-      setError(err.message);
+      console.error("Register error:", err);
+      setError(err.message || "Kayıt sırasında hata oluştu");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,10 +64,14 @@ export default function Register() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-400 to-purple-600 dark:from-gray-900 dark:to-black">
       <Link
         to="/"
-        className="absolute left-0 top-0 h-full w-12 flex items-center justify-center dark:bg-blue-900 dark:hover:bg-blue-950 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xl rounded-r"
+        className="absolute top-4 left-4 w-12 h-12 md:h-full md:top-0 md:left-0 flex items-center justify-center
+    dark:bg-gray-800 dark:hover:bg-gray-900 bg-blue-500 hover:bg-blue-600
+    text-white font-bold text-xl rounded-full md:rounded-r transition-all"
+        aria-label="Ana sayfa"
       >
         {"<"}
       </Link>
+
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg w-full max-w-sm"
@@ -90,47 +88,88 @@ export default function Register() {
           <label className="block text-gray-700 dark:text-gray-300">Kullanıcı Adı</label>
           <input
             type="text"
-            {...register("username", { required: true })}
+            {...register("username", {
+              required: "Kullanıcı adı zorunludur",
+              minLength: {
+                value: 3,
+                message: "En az 3 karakter olmalı"
+              },
+              maxLength: {
+                value: 15,
+                message: "En fazla 15 karakter olabilir"
+              },
+              pattern: {
+                value: /^[a-zA-Z0-9_]+$/,
+                message: "Sadece harf, sayı ve alt çizgi kullanabilirsiniz"
+              }
+            })}
             className="w-full p-2 border border-gray-300 rounded text-black dark:text-white dark:bg-gray-700 dark:border-gray-600"
-            required
           />
+          {errors.username && (
+            <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>
+          )}
         </div>
 
         <div className="mb-4">
           <label className="block text-gray-700 dark:text-gray-300">İsim Soyisim</label>
           <input
             type="text"
-            {...register("fullname", { required: true })}
+            {...register("fullname", {
+              required: "İsim zorunludur",
+              minLength: {
+                value: 2,
+                message: "En az 2 karakter olmalı"
+              }
+            })}
             className="w-full p-2 border border-gray-300 rounded text-black dark:text-white dark:bg-gray-700 dark:border-gray-600"
-            required
           />
+          {errors.fullname && (
+            <p className="text-red-500 text-xs mt-1">{errors.fullname.message}</p>
+          )}
         </div>
 
         <div className="mb-4">
           <label className="block text-gray-700 dark:text-gray-300">E-posta</label>
           <input
             type="email"
-            {...register("email", { required: true })}
+            {...register("email", {
+              required: "E-posta zorunludur",
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: "Geçersiz e-posta adresi"
+              }
+            })}
             className="w-full p-2 border border-gray-300 rounded text-black dark:text-white dark:bg-gray-700 dark:border-gray-600"
-            required
           />
+          {errors.email && (
+            <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+          )}
         </div>
 
         <div className="mb-6">
           <label className="block text-gray-700 dark:text-gray-300">Şifre</label>
           <input
             type="password"
-            {...register("password", { required: true })}
+            {...register("password", {
+              required: "Şifre zorunludur",
+              minLength: {
+                value: 6,
+                message: "En az 6 karakter olmalı"
+              }
+            })}
             className="w-full p-2 border border-gray-300 rounded text-black dark:text-white dark:bg-gray-700 dark:border-gray-600"
-            required
           />
+          {errors.password && (
+            <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
+          )}
         </div>
 
         <button
           type="submit"
-          className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white w-full py-2 rounded transition"
+          disabled={loading}
+          className="bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white w-full py-2 rounded transition disabled:opacity-70"
         >
-          Hesap Oluştur
+          {loading ? "Oluşturuluyor..." : "Hesap Oluştur"}
         </button>
 
         <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
@@ -142,7 +181,6 @@ export default function Register() {
             Giriş Yap
           </Link>
         </p>
-
       </form>
     </div>
   );

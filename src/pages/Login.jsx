@@ -1,10 +1,15 @@
 // src/pages/Login.jsx
 import { useForm } from "react-hook-form";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { getFirebaseAuth, isFirebaseReady } from "../services/firebase";
+
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { httpsCallable } from "firebase/functions";
+
+import { getFirebaseFunctions, getFirebaseAuth, initializeFirebase } from "../services/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+
+
 
 
 export default function Login() {
@@ -13,24 +18,40 @@ export default function Login() {
     const { register, handleSubmit } = useForm();
     const navigate = useNavigate();
     const [error, setError] = useState("");
-    const [ready, setReady] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-
-
-
+    initializeFirebase();
     const onSubmit = async (data) => {
+        setLoading(true); // işlem başladı
         try {
-            if (!isFirebaseReady()) {
-                setError("Firebase henüz hazır değil, lütfen tekrar deneyin.");
-                return;
-            }
             const auth = getFirebaseAuth();
-            await signInWithEmailAndPassword(auth, data.email, data.password);
-            navigate("/Dashboard"); // giriş başarılıysa anasayfaya yönlendir
+            const email = data.email;
+            const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+
+            const response = await fetch('https://securelogin-skz3ms2laq-uc.a.run.app', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+                },
+                body: JSON.stringify({ email: email }),
+            });
+
+            const datares = await response.json();
+
+            if (datares.success) {
+                await signInWithEmailAndPassword(auth, data.email, data.password);
+                navigate("/Dashboard");
+            } else {
+                setError("Giriş başarısız.");
+            }
         } catch (err) {
-            setError("E-posta veya şifre hatalı!" + err + isFirebaseReady());
+            setError(err.message || "Giriş başarısız.");
+        } finally {
+            setLoading(false); // işlem bitti
         }
     };
+
 
 
     return (
@@ -38,10 +59,14 @@ export default function Login() {
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-400 to-indigo-600 dark:from-indigo-900 dark:to-teal-700">
             <Link
                 to="/"
-                className="absolute left-0 top-0 h-full w-12 flex items-center justify-center  dark:bg-gray-800 dark:hover:bg-gray-900 bg-blue-500 hover:bg-blue-600 text-white font-bold text-xl rounded-r"
+                className="absolute top-4 left-4 w-12 h-12 md:h-full md:top-0 md:left-0 flex items-center justify-center
+    dark:bg-gray-800 dark:hover:bg-gray-900 bg-blue-500 hover:bg-blue-600
+    text-white font-bold text-xl rounded-full md:rounded-r transition-all"
+                aria-label="Ana sayfa"
             >
                 {"<"}
             </Link>
+
             <form
                 onSubmit={handleSubmit(onSubmit)}
                 className="bg-white p-8 rounded-xl shadow-lg w-full max-w-sm dark:bg-gray-800"
@@ -76,11 +101,13 @@ export default function Login() {
 
                 <button
                     type="submit"
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded transition"
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded transition disabled:opacity-50"
                     name="submit"
+                    disabled={loading}
                 >
-                    Giriş Yap
+                    {loading ? "Giriş yapılıyor..." : "Giriş Yap"}
                 </button>
+
                 <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
                     Hesabınız yok mu?{" "}
                     <Link

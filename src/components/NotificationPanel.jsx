@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { httpsCallable } from "firebase/functions";
-import { getFirebaseFunctions, initializeFirebase } from "../services/firebase";
+import { getFirebaseFunctions, initializeFirebase, getFirebaseAuth } from "../services/firebase";
 import { AnimatePresence, motion } from "framer-motion";
 
 initializeFirebase();
@@ -11,15 +11,42 @@ export default function NotificationPanel({ open, onClose }) {
 
     const [notifications, setNotifications] = useState([]);
     const markRead = httpsCallable(functions, "markNotificationsRead");
-
+    const auth = getFirebaseAuth();
 
     useEffect(() => {
         const fetchNotifications = async () => {
             try {
                 setLoading(true); // yükleme başlat
-                const getNotifs = httpsCallable(functions, "getNotifications");
-                const res = await getNotifs();
-                const rawNotifs = res.data.notifications || [];
+                //const getNotifs = httpsCallable(functions, "getNotifications");
+                //const res = await getNotifs();
+
+
+                const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+                const response = await fetch('https://getnotifications-skz3ms2laq-uc.a.run.app', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Eğer fonksiyon auth gerektiriyorsa, token ekle
+                        ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+                    }
+
+                });
+
+
+                //const result = await getInterests();
+
+                const dataRes = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
+
+
+
+
+
+
+
+
+
+
+                const rawNotifs = dataRes.notifications || [];
 
                 const sortedNotifs = rawNotifs.sort((a, b) => {
                     const timeA = a.timestamp?._seconds || 0;
@@ -28,6 +55,10 @@ export default function NotificationPanel({ open, onClose }) {
                 });
 
                 setNotifications(sortedNotifs);
+
+                if (sortedNotifs.length > 0) {
+                    markRead();
+                }
             } catch (err) {
                 console.error("Bildirim alınamadı:", err);
             }
@@ -37,7 +68,6 @@ export default function NotificationPanel({ open, onClose }) {
 
         if (open) {
             fetchNotifications();
-            markRead(); // ← sadece panel açıldığında okundu yap
 
         }
     }, [open]);
@@ -50,8 +80,9 @@ export default function NotificationPanel({ open, onClose }) {
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: -20, scale: 0.95 }}
                     transition={{ duration: 0.2 }}
-                    className="absolute right-6 top-16 w-80 bg-white dark:bg-gray-800 shadow-xl border rounded-xl p-4 z-50"
+                    className="absolute left-52 sm:left-50 top-0 w-[90vw] sm:w-80 bg-white dark:bg-gray-800 shadow-xl border rounded-xl p-4 z-50"
                 >
+
                     <div className="flex justify-between items-center mb-3">
                         <h3 className="font-bold text-gray-800 dark:text-white">Yeni Bildirimler</h3>
 
@@ -67,14 +98,15 @@ export default function NotificationPanel({ open, onClose }) {
                                     <li
                                         key={i}
                                         className={`text-sm border-b pb-2 ${n.read
-                                                ? "text-gray-700 dark:text-gray-300"
-                                                : "font-semibold text-black dark:text-white"
+                                            ? "text-gray-700 dark:text-gray-300"
+                                            : "font-semibold text-black dark:text-white"
                                             }`}
                                     >
                                         {n.type === "follow" && `Bir kullanıcı seni takip etmeye başladı: ${n.fromUsername}`}
                                         {n.type === "unfollow" && `Bir kullanıcı takipten çıktı: ${n.fromUsername}`}
                                         {n.type === "followRequest" && `Takip isteğin var: ${n.fromUsername}`}
                                         {n.type === "follow_accepted" && `Takip isteği kabul edildi: ${n.fromUsername}`}
+                                        {n.type === "new_update" && `${n.fromUsername} Bir güncelleme paylaştı.`}
                                         <br />
                                         <span className="text-xs text-gray-500">
                                             {n.timestamp?._seconds

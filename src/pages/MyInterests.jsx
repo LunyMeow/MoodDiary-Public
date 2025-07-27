@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
-import { getFirebaseAuth, getFirebaseDB } from "../services/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { Link ,useNavigate} from "react-router-dom";
+
+import { Link, useNavigate } from "react-router-dom";
+
+import { getFirebaseAuth } from "../services/firebase";
+
+
+import RedirectMessage from "../components/RedirectMessage";
+
 
 
 const allInterests = [
@@ -19,28 +24,48 @@ const allInterests = [
 ];
 
 export default function MyInterests() {
-  const auth = getFirebaseAuth();
-  const db = getFirebaseDB();
-  const user = auth?.currentUser;
-
   const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
   const navigate = useNavigate();
+  //const functions = getFirebaseFunctions();
+
+  const auth = getFirebaseAuth();
+
+  if (!auth.currentUser) {
+    return <RedirectMessage />;
+  }
 
   useEffect(() => {
     const fetchInterests = async () => {
-      if (!user) return;
+      setLoading(true);
+      try {
+        //const getInterests = httpsCallable(functions, 'getUserInterests');
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        const response = await fetch('https://getuserinterests-skz3ms2laq-uc.a.run.app', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            // Eğer fonksiyon auth gerektiriyorsa, token ekle
+            ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+          },
 
-      const docRef = doc(db, "users", user.uid);
-      const snap = await getDoc(docRef);
-      if (snap.exists()) {
-        const data = snap.data();
+        });
+
+
+        //const result = await getInterests();
+
+        const data = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
+
+
         setSelected(data.interests || []);
+      } catch (err) {
+        console.error("İlgi alanları yüklenemedi:", err);
       }
+      setLoading(false);
     };
     fetchInterests();
-  }, [user]);
+  }, []);
 
   const toggleInterest = (interest) => {
     setSelected((prev) =>
@@ -51,21 +76,60 @@ export default function MyInterests() {
   };
 
   const saveInterests = async () => {
-    if (!user) return;
+    if (selected.length === 0) {
+      setStatusMsg("En az bir ilgi alanı seçmelisiniz");
+      return;
+    }
+
     setLoading(true);
     try {
-      const docRef = doc(db, "users", user.uid);
-      await updateDoc(docRef, { interests: selected });
-      setStatusMsg("İlgi alanların kaydedildi ✅");
-      navigate("/Dashboard")
+      //const updateInterests = httpsCallable(functions, 'updateUserInterests');
+      //await updateInterests({ interests: selected });
 
+
+
+
+      const auth = getFirebaseAuth();
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const response = await fetch('https://updateuserinterests-skz3ms2laq-uc.a.run.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Eğer fonksiyon auth gerektiriyorsa, token ekle
+          ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+        },
+        body: JSON.stringify({ interests: selected }),
+
+      });
+
+
+      //const result = await getInterests();
+
+      const data = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
+
+
+
+
+      setStatusMsg("İlgi alanların kaydedildi ✅");
+      setTimeout(() => navigate("/Dashboard"), 1500);
     } catch (err) {
       console.error(err);
-      setStatusMsg("Hata oluştu ❌");
+      setStatusMsg(err.message || "Hata oluştu ❌");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-    setTimeout(() => setStatusMsg(""), 3000);
   };
+  if (loading) {
+    return (
+      <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md dark:bg-gray-800">
+        <div className="flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+          <span className="ml-2 text-gray-600 dark:text-gray-300">Yükleniyor...</span>
+        </div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md max-w-xl mx-auto">

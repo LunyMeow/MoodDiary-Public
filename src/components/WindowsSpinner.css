@@ -1,0 +1,45 @@
+/* WindowsSpinner.css */
+
+.windows8 {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin: auto;
+}
+
+.windows8 .wBall {
+  position: absolute;
+  width: 114px;
+  height: 114px;
+  opacity: 0;
+  transform: rotate(225deg);
+  animation: orbit 4.8425s infinite;
+}
+
+.windows8 .wBall .wInnerBall {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  background: black;
+  left: 0;
+  top: 0;
+  border-radius: 15px;
+}
+
+/* Delay örnekleri */
+#wBall_1 { animation-delay: 1.056s; }
+#wBall_2 { animation-delay: 0.203s; }
+#wBall_3 { animation-delay: 0.4265s; }
+#wBall_4 { animation-delay: 0.6295s; }
+#wBall_5 { animation-delay: 0.843s; }
+
+@keyframes orbit {
+  0% { opacity: 1; transform: rotate(180deg); }
+  7% { transform: rotate(300deg); }
+  30% { transform: rotate(410deg); }
+  39% { transform: rotate(645deg); }
+  70% { transform: rotate(770deg); }
+  75% { transform: rotate(900deg); }
+  76% { opacity: 0; transform: rotate(900deg); }
+  100% { opacity: 0; transform: rotate(900deg); }
+}

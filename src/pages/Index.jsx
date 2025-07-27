@@ -17,7 +17,7 @@ const texts = {
         tagline: 'Gizli ve şifreli günlükleriniz',
         features: [
             'Özel, herkese açık ve takipçilere özel paylaşım',
-            'Arkadaşları takip et ve bildiriler al',
+            'Arkadaşlarını takip et ve bildirimler al',
             'Karanlık mod & modern tasarım'
         ],
         getStarted: 'Başlayın',

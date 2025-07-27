@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { doc, getDoc } from "firebase/firestore";
 import { useForm } from "react-hook-form";
-import { getFirebaseDB, getFirebaseAuth, getFirebaseApp } from "../services/firebase";
+import { getFirebaseDB, getFirebaseAuth, initializeFirebase } from "../services/firebase";
 import { useEffect, useState } from "react";
-import { decrypt } from "../utils/crypto";
-import { getFunctions, httpsCallable } from "firebase/functions";
+//import { getFunctions, httpsCallable } from "firebase/functions";
 import { Link } from "react-router-dom";
+import RedirectMessage from "../components/RedirectMessage";
+
 
 
 export default function EditDiary() {
@@ -21,62 +21,48 @@ export default function EditDiary() {
   const db = getFirebaseDB();
   const auth = getFirebaseAuth();
   const user = auth?.currentUser;
+  initializeFirebase();
+  //const functions = getFunctions(getFirebaseApp());
+  //const editDiary = httpsCallable(functions, "editDiary");
 
-  const functions = getFunctions(getFirebaseApp());
-  const editDiary = httpsCallable(functions, "editDiary");
-
-  useEffect(() => {
-    if (!user?.uid) return;
-
-    async function fetchKey() {
-      try {
-        const ref = doc(db, "diaries", id);
-        const snapshot = await getDoc(ref);
-
-        if (!snapshot.exists()) {
-          navigate("/Dashboard");
-          return;
-        }
-
-        const data = snapshot.data();
-        if (data.userId !== user.uid) {
-          navigate("/");
-          return;
-        }
-
-        setAesPass(data.aesPass || "default");
-      } catch {
-        setAesPass("default");
-      }
-    }
-
-    fetchKey();
-  }, [db, id, navigate, user]);
+  if (!auth.currentUser) {
+    return <RedirectMessage />;
+  }
 
   useEffect(() => {
-    if (!aesPass || !user?.uid) return;
+    if (!user?.uid) {
+      console.log("Really?");
+      return
+    };
 
     async function loadDiary() {
       try {
-        const ref = doc(db, "diaries", id);
-        const snapshot = await getDoc(ref);
 
-        if (!snapshot.exists()) {
-          navigate("/Dashboard");
-          return;
-        }
+        const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+        const response = await fetch('https://fetchdiary-skz3ms2laq-uc.a.run.app', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Eğer fonksiyon auth gerektiriyorsa, token ekle
+            ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+          },
+          body: JSON.stringify({ diaryId: id })
 
-        const data = snapshot.data();
+        });
 
-        if (data.userId !== user.uid) {
-          navigate("/");
-          return;
-        }
 
-        setValue("status", data.status || "private");
-        setValue("topic", data.topic || "");
-        const decryptedContent = decrypt(data.content, aesPass);
-        setValue("content", decryptedContent);
+        //const result = await getInterests();
+
+        const data = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
+
+
+
+
+
+        setValue("status", data.diary.status || "private");
+        setValue("topic", data.diary.topic || "");
+
+        setValue("content", data.diary.decryptedContent);
         setDiaryLoaded(true);
       } catch {
         setValue("content", "[İçerik çözülemedi]");
@@ -87,28 +73,59 @@ export default function EditDiary() {
   }, [aesPass, db, id, navigate, setValue, user]);
 
   const onSubmit = async (formData) => {
-    if (!user) return;
+    if (!user) {
+      console.log("Really?");
+      return
+    };
 
     setIsSubmitting(true); // İşlem başladı
     try {
-      const result = await editDiary({
-        diaryId: id,
-        newContent: formData.content,
-        status: formData.status,
-        topic: formData.topic,
+      //const result = await editDiary();
+
+
+      const formData2 = formData;
+      const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+      const response = await fetch('https://editdiary-skz3ms2laq-uc.a.run.app', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          // Eğer fonksiyon auth gerektiriyorsa, token ekle
+          ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+        },
+        body: JSON.stringify({
+          diaryId: id,
+          newContent: formData2.content,
+          status: formData2.status,
+          topic: formData2.topic,
+        })
       });
 
-      if (result.data?.success) {
+
+      //const result = await getInterests();
+      const data = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
+
+
+
+      if (data.success) {
         navigate("/Dashboard");
       } else {
         alert("Güncelleme sırasında hata oluştu.");
       }
-    } catch {
+    } catch (error) {
       alert("Güncelleme sırasında hata oluştu.");
     } finally {
       setIsSubmitting(false); // İşlem bitti
     }
   };
+
+  if (!diaryLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-500 to-blue-900 dark:from-black dark:to-gray-700">
+        <div className="text-white text-xl animate-pulse">Günlük yükleniyor...</div>
+      </div>
+    );
+  }
+
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-500 to-blue-900 dark:from-black dark:to-gray-700">

@@ -1,98 +1,126 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { getFirebaseDB, getFirebaseAuth, getFirebaseFunctions } from "../services/firebase";
-import { httpsCallable } from "firebase/functions";
+import { getFirebaseFunctions, getFirebaseAuth, initializeFirebase } from "../services/firebase";
 
-import { doc, getDoc } from "firebase/firestore";
+import RedirectMessage from "../components/RedirectMessage";
+
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
+import { Timestamp } from "firebase/firestore";
+
+
 export default function DiaryPage() {
     const { diaryId } = useParams();
-
-    const db = getFirebaseDB();
-    const auth = getFirebaseAuth();
     const functions = getFirebaseFunctions();
-    const currentUser = auth?.currentUser;
 
     const [diary, setDiary] = useState(null);
-    const [decryptedContent, setDecryptedContent] = useState("");
-    const [username, setUsername] = useState("Anonim Kullanıcı");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    initializeFirebase();
+
+
+
+    function toDate(timestamp) {
+
+        if (!timestamp) return null;
+
+        // Eğer Date objesi ise direkt dön
+        if (timestamp instanceof Date) return timestamp;
+
+        // Firestore Timestamp objesi ise toDate kullan
+        if (timestamp instanceof Timestamp) return timestamp.toDate();
+
+        // Eğer plain obje ise ve _seconds varsa Date objesi oluştur
+        if (timestamp._seconds !== undefined) {
+            return new Date(timestamp._seconds * 1000 + (timestamp._nanoseconds || 0) / 1000000);
+        }
+
+        // Eğer toDate fonksiyonu varsa kullan
+        if (typeof timestamp.toDate === "function") return timestamp.toDate();
+
+        // Eğer seconds varsa (farklı formatta) dönüşüm yap
+        if (timestamp.seconds) return new Date(timestamp.seconds * 1000);
+
+        // String ise
+        if (typeof timestamp === "string") {
+            const d = new Date(timestamp);
+            if (!isNaN(d)) return d;
+        }
+
+        return null;
+    }
+
+
+    const auth = getFirebaseAuth();
+    if (!auth.currentUser) {
+        return <RedirectMessage />;
+    }
+
+
+
 
     useEffect(() => {
         const fetchDiary = async () => {
             setLoading(true);
             setError("");
-            setDecryptedContent("");
 
             try {
-                const diaryRef = doc(db, "diaries", diaryId);
-                const diarySnap = await getDoc(diaryRef);
+                //const fetchDiaryFn = httpsCallable(functions, "fetchDiary");
+                //const result = await fetchDiaryFn({ diaryId });
 
-                if (!diarySnap.exists()) {
-                    setError("Günlük bulunamadı.");
-                    setLoading(false);
-                    return;
-                }
 
-                const diaryData = diarySnap.data();
 
-                const isOwner = currentUser && diaryData.userId === currentUser.uid;
-                const isPublic = diaryData.status === "public";
+                const idToken = auth.currentUser ? await auth.currentUser.getIdToken() : null;
+                const response = await fetch('https://fetchdiary-skz3ms2laq-uc.a.run.app', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Eğer fonksiyon auth gerektiriyorsa, token ekle
+                        ...(idToken && { 'Authorization': 'Bearer ' + idToken }),
+                    },
+                    body: JSON.stringify({ diaryId: diaryId })
 
-                if (!isPublic && !isOwner) {
-                    setError("Günlük bulunamadı.");
-                    setLoading(false);
-                    return;
-                }
+                });
 
-                setDiary(diaryData);
 
-                // Kullanıcı adını al
-                const userRef = doc(db, "users", diaryData.userId);
-                const userSnap = await getDoc(userRef);
-                if (userSnap.exists()) {
-                    setUsername(userSnap.data().username || "Anonim Kullanıcı");
-                }
+                //const result = await getInterests();
 
-                // İçerik şifreliyse ve kullanıcı sahipse, decryptDiary fonksiyonunu çağır
+                const data = await response.json(); // ← burada response body'si JSON'a ayrıştırılıyor
 
-                const decryptDiary = httpsCallable(functions, "decryptDiary");
-                try {
-                    const res = await decryptDiary({ diaryId });
-                    setDecryptedContent(res.data.decrypted);
-                } catch (e) {
-                    console.error("Şifre çözme hatası:", e);
-                    setDecryptedContent("[İçerik çözülemedi]");
-                }
-
-                setLoading(false);
+                setDiary(data.diary);
             } catch (err) {
-                console.error(err);
-                setError("Bir hata oluştu.");
-                setLoading(false);
+                setError(err.message || "Bir hata oluştu.");
             }
+
+            setLoading(false);
         };
 
-        fetchDiary();
-    }, [diaryId, currentUser, db, functions]);
+        if (diaryId) fetchDiary();
+    }, [diaryId, functions]);
 
-    if (loading) return <p>Yükleniyor...</p>;
-    if (error) return <p className="text-red-600">{error}</p>;
+    if (loading) {
+        return (
+            <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md dark:bg-gray-800">
+                <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                    <span className="ml-2 text-gray-600 dark:text-gray-300">Yükleniyor...</span>
+                </div>
+            </div>
+        );
+    } if (error) return <p className="text-red-600">{error}</p>;
     if (!diary) return null;
-
     return (
-        <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+        <div className="max-w-2xl mx-auto mt-5 bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 text-gray-900 dark:text-gray-100">
             <h1 className="text-2xl font-bold mb-2">Günlük Detayları</h1>
             <p className="mb-1">
-                <strong>Yazar:</strong> {username}
+                <strong>Yazar:</strong> {diary.username}
             </p>
             <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                {diary.createdAt?.toDate
-                    ? format(diary.createdAt.toDate(), "d MMMM yyyy, HH:mm", { locale: tr })
-                    : ""}
+                {toDate(diary.createdAt)
+                    ? format(toDate(diary.createdAt), "d MMMM yyyy, HH:mm", { locale: tr })
+                    : "Tarih yok"}
             </p>
             <div className="mb-4">
                 {diary.topic?.map((topic, i) => (
@@ -100,12 +128,12 @@ export default function DiaryPage() {
                         key={i}
                         className="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs px-2 py-1 rounded-full mr-2"
                     >
-                        {topic}
+                        {diary.topic}
                     </span>
                 ))}
             </div>
             <div className="prose dark:prose-invert whitespace-pre-wrap">
-                {decryptedContent}
+                {diary.decryptedContent}
             </div>
         </div>
     );
