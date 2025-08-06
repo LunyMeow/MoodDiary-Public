@@ -1,5 +1,7 @@
 # MoodDiary - React Tabanlı Duygu Günlüğü Uygulaması
 
+Take a Look > https://mooddiary.me
+
 ## 🎯 Proje Amacı
 
 MoodDiary, React.js kullanılarak geliştirilen bir web uygulamasıdır. Kullanıcı arayüzü, bileşen mimarisi, state yönetimi ve API entegrasyonu gibi temel React becerilerimi göstermek amacıyla tasarlanmıştır.
@@ -39,7 +41,6 @@ Bu repoda sadece:
 
 ## 📌 Neden Paylaştım?
 
-> Bu proje, **React ile proje geliştirebildiğimi göstermek için** hazırlandı.  
 > Başkalarının da proje yapısını, klasör organizasyonunu ve bileşen kullanımını inceleyebilmesi amacıyla açık kaynak olarak yayınlanmıştır.
 
 ---
