@@ -1,6 +1,21 @@
 import { useEffect, useState } from "react";
 
 export default function ThemeToggle() {
+
+
+
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => setIsMobile(window.innerWidth <= 768);
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => window.removeEventListener("resize", checkIsMobile);
+  }, []);
+
+
+
+
   const [isDark, setIsDark] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
     //console.log("[Init] Kaydedilmiş tema:", savedTheme);
@@ -32,9 +47,18 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={toggleTheme}
-      className="fixed bottom-4 right-4 bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white px-4 py-2 rounded-full shadow-lg transition"
+      className="fixed bottom-4 right-4 bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-white p-2 rounded-full shadow-lg transition"
     >
-      {isDark ? "☀️ Işığı Aç" : "🌙 Gece Modu"}
+      {isDark ? (
+        <>
+          ☀️ <span className="hidden sm:inline">Gündüz</span>
+        </>
+      ) : (
+        <>
+          🌙 <span className="hidden sm:inline">Gece</span>
+        </>
+      )}
+
     </button>
   );
 }

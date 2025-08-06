@@ -8,6 +8,7 @@ import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 
 import { Timestamp } from "firebase/firestore";
+import { div } from "framer-motion/client";
 
 
 export default function DiaryPage() {
@@ -54,9 +55,7 @@ export default function DiaryPage() {
 
 
     const auth = getFirebaseAuth();
-    if (!auth.currentUser) {
-        return <RedirectMessage />;
-    }
+
 
 
 
@@ -112,29 +111,41 @@ export default function DiaryPage() {
     } if (error) return <p className="text-red-600">{error}</p>;
     if (!diary) return null;
     return (
-        <div className="max-w-2xl mx-auto mt-5 bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 text-gray-900 dark:text-gray-100">
-            <h1 className="text-2xl font-bold mb-2">Günlük Detayları</h1>
-            <p className="mb-1">
-                <strong>Yazar:</strong> {diary.username}
-            </p>
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-                {toDate(diary.createdAt)
-                    ? format(toDate(diary.createdAt), "d MMMM yyyy, HH:mm", { locale: tr })
-                    : "Tarih yok"}
-            </p>
-            <div className="mb-4">
-                {diary.topic?.map((topic, i) => (
-                    <span
-                        key={i}
-                        className="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs px-2 py-1 rounded-full mr-2"
-                    >
-                        {diary.topic}
-                    </span>
-                ))}
+        <div className="p-2 max-w-2xl mx-auto md:mx-0 md:ml-auto md:mr-auto">
+            <div className="flex justify-center md:justify-start mb-4">
+                <a
+                    href="/"
+                    className="inline-block py-2 px-6 bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 hover:from-blue-600 hover:via-indigo-600 hover:to-purple-600 text-white font-bold rounded-xl shadow-md hover:shadow-lg transition-all duration-300"
+                >
+                    MoodDiary
+                </a>
             </div>
-            <div className="prose dark:prose-invert whitespace-pre-wrap">
-                {diary.decryptedContent}
+
+            <div className="bg-white p-6 rounded-xl shadow-md dark:bg-gray-800 text-gray-900 dark:text-gray-100">
+                <h1 className="text-2xl font-bold mb-2">Günlük</h1>
+                <p className="mb-1">
+                    <strong>Yazar:</strong> {diary.username}
+                </p>
+                <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+                    {toDate(diary.createdAt)
+                        ? format(toDate(diary.createdAt), "d MMMM yyyy, HH:mm", { locale: tr })
+                        : "Tarih yok"}
+                </p>
+                <div className="mb-4">
+                    {diary.topic?.map((topic, i) => (
+                        <span
+                            key={i}
+                            className="inline-block bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-xs px-2 py-1 rounded-full mr-2"
+                        >
+                            {topic}
+                        </span>
+                    ))}
+                </div>
+                <div className="prose dark:prose-invert whitespace-pre-wrap">
+                    {diary.decryptedContent}
+                </div>
             </div>
         </div>
+
     );
 }

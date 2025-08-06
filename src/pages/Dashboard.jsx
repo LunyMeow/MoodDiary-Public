@@ -8,6 +8,22 @@ import NotificationPanel from "../components/NotificationPanel";
 import RedirectMessage from "../components/RedirectMessage";
 
 export default function Home() {
+
+
+
+
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+        const checkIsMobile = () => setIsMobile(window.innerWidth <= 768);
+        checkIsMobile();
+        window.addEventListener("resize", checkIsMobile);
+        return () => window.removeEventListener("resize", checkIsMobile);
+    }, []);
+
+
+
+
     //const functions = getFirebaseFunctions();
     const auth = getFirebaseAuth();
     const navigate = useNavigate();
@@ -27,12 +43,13 @@ export default function Home() {
     //const deleteDiaryBackend = httpsCallable(functions, 'deleteDiary');
     //const checkUnreadNotifs = httpsCallable(functions, 'checkUnreadNotifications');
     //const markNotifsRead = httpsCallable(functions, 'markNotificationsRead');
+
     initializeFirebase();
     if (!auth.currentUser) {
         return <RedirectMessage />;
     }
-
     useEffect(() => {
+
         const loadData = async () => {
             try {
                 const auth = getFirebaseAuth();
@@ -128,7 +145,7 @@ export default function Home() {
 
 
 
-            setDiaries(prev => prev.filter(d => d.id !== diaryId));
+            setDiaries(prev => prev.filter(d => d.diaryId !== diaryId));
         } catch (err) {
             console.error("Günlük silinirken hata:", err);
             setError("Günlük silinirken hata oluştu");
@@ -181,60 +198,82 @@ export default function Home() {
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-400 to-purple-600 dark:from-gray-900 dark:to-black p-2 sm:p-4">
             {/* Üst Bilgi Çubuğu */}
-            <div className="flex justify-between max-w-3xl mx-auto bg-white p-2 sm:p-6 rounded-xl shadow-md mb-6 dark:bg-gray-800 items-center">
+            <div className="flex justify-between max-w-3xl mx-auto bg-white p-2 sm:p-6 rounded-xl shadow-md mb-4 sm:mb-6 dark:bg-gray-800 items-center">
                 <div className="flex items-center gap-6 sm:items-end">
-                    <div className="relative">
-                        <button
-                            onClick={toggleNotifications}
-                            className="bg-indigo-600 text-white px-2 py-2 rounded hover:bg-indigo-800 relative"
-                            aria-label="Bildirimler"
-                        >
-                            🔔
-                        </button>
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        {/* Profil ve Bildirim */}
+                        <div className="relative flex items-center gap-2 sm:gap-4 ml-2 sm:ml-0">
 
-                        <div className="absolute top-full mt-2 right-0 z-50 w-64 sm:w-80 max-w-[90vw]">
-                            <NotificationPanel
-                                open={showNotifs}
-                                onClose={() => setShowNotifs(false)}
-                            />
+
+                            {/* Bildirim Butonu */}
+                            <div className="relative">
+                                <button
+                                    onClick={toggleNotifications}
+                                    className="bg-indigo-600 text-white px-2 py-2 rounded hover:bg-indigo-800"
+                                    aria-label="Bildirimler"
+                                >
+                                    🔔
+                                </button>
+
+                                {/* Bildirim Paneli */}
+                                <div className="absolute top-full mt-2 right-0 z-50 w-64 sm:w-80 max-w-[90vw]">
+                                    <NotificationPanel
+                                        open={showNotifs}
+                                        onClose={() => setShowNotifs(false)}
+                                    />
+                                </div>
+
+                                {/* Bildirim Uyarısı */}
+                                {hasUnreadNotifs && (
+                                    <>
+                                        <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-600 border border-white animate-ping" />
+                                        <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-600 border border-white" />
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Profil Fotoğrafı */}
+                            <Link to={`/user/${userProfile.username}`}>
+                                <img
+                                    src={userProfile.photoUrl}
+                                    alt="Profil Fotoğrafı"
+                                    className="sm:w-12 sm:h-12 rounded-full object-cover cursor-pointer"
+                                />
+
+                            </Link>
+
+                            <h1 className="text-xl sm:text-3xl  font-bold text-indigo-700 dark:text-white">
+                                {userProfile.fullname}
+                            </h1>
                         </div>
 
-                        {hasUnreadNotifs && (
-                            <>
-                                <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-600 border border-white animate-ping" />
-                                <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-600 border border-white" />
-                            </>
-                        )}
                     </div>
 
-                    <h1 className="text-3xl font-bold text-indigo-700 dark:text-white">
-                        Hoş geldin, {userProfile.fullname}
-                    </h1>
+
                 </div>
 
-                <div className=" sm:flex items-center gap-3">
-                    <img
-                        src={userProfile.photoUrl}
-                        alt="Profil Fotoğrafı"
-                        className="w-12 h-12 rounded-full object-cover "
-                    />
+                <div className="sm:flex  items-center gap-3 flex-col sm:flex-row">
+
                     <button
                         onClick={handleLogout}
-                        className="bg-red-500 hover:bg-red-600 text-white py-2 px-5 rounded"
+                        className="bg-red-500 hover:bg-red-600 text-white py-1.5 px-4 rounded m-1 text-sm sm:py-2 sm:px-5 sm:text-base"
                     >
                         Çıkış
                     </button>
 
+
                 </div>
+
+
             </div>
 
             {/* Navigasyon Butonları */}
-            <div className="w-full max-w-3xl mx-auto bg-white p-3 sm:p-6 rounded-xl shadow-md mb-6 dark:bg-gray-800">
+            <div className="w-full max-w-3xl mx-auto bg-white p-3 sm:p-3 rounded-xl shadow-md mb-4 sm:mb-6 dark:bg-gray-800">
                 <div className="grid grid-cols-2 items-center">
                     <div className="justify-self-start">
                         <Link
                             to="/CommunityStories"
-                            className="w-24 sm:w-48 h-10 inline-flex items-center justify-center bg-lime-300 hover:bg-lime-400 text-black px-4 rounded text-sm leading-none dark:bg-blue-700 dark:text-white dark:hover:bg-blue-800"
+                            className=" text-sm sm:text-lg w-20  sm:w-48 h-9 sm:h-10 inline-flex items-center justify-center bg-lime-300 hover:bg-lime-400 text-black px-4 rounded  leading-none dark:bg-blue-700 dark:text-white dark:hover:bg-blue-800"
                         >
                             Topluluk Hikayeleri
                         </Link>
@@ -243,24 +282,18 @@ export default function Home() {
                     <div className="flex gap-3 justify-self-end">
                         <Link
                             to="/UserRelations"
-                            className="h-10 inline-flex items-center justify-center text-sm leading-none bg-blue-500 hover:bg-blue-600 text-black px-4 rounded dark:bg-green-400 dark:text-white dark:hover:bg-blue-500"
+                            className="h-9  px-3 sm:px-4 inline-flex items-center justify-center text-sm leading-none bg-blue-500 hover:bg-blue-600 text-black  rounded dark:bg-green-400 dark:text-white dark:hover:bg-blue-500"
 
                             aria-label="İlişkiler"
                         >
                             💕
                         </Link>
 
-                        <Link
-                            to="/Profile"
-                            className="h-10 inline-flex items-center justify-center text-sm leading-none bg-yellow-300 hover:bg-yellow-400 text-black px-4 rounded dark:bg-green-400 dark:text-white dark:hover:bg-green-500"
-                            aria-label="Profil"
-                        >
-                            🙂
-                        </Link>
+
 
                         <Link
                             to="/UserSearch"
-                            className="h-10 inline-flex items-center justify-center text-sm leading-none bg-green-300 hover:bg-green-400 text-black px-4 rounded dark:bg-red-700 dark:text-white dark:hover:bg-red-800"
+                            className="h-9 inline-flex items-center justify-center text-sm leading-none bg-green-300 hover:bg-green-400 text-black px-4 rounded dark:bg-red-700 dark:text-white dark:hover:bg-red-800"
                             aria-label="Kullanıcı Ara"
                         >
                             🔍
@@ -272,12 +305,12 @@ export default function Home() {
             {/* Günlükler Listesi */}
             <div className="max-w-3xl mx-auto bg-white p-3 sm:p-8 rounded-xl shadow-lg dark:bg-gray-800">
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">Günlüklerin</h2>
+                    <h2 className="text-lg sm:text-xl font-semibold">Günlüklerin</h2>
                     <button
                         onClick={() => navigate("/NewDiary")}
-                        className="bg-green-500 hover:bg-green-600 text-white py-2 px-4 rounded"
+                        className="text-sm sm:text-base   bg-green-500 hover:bg-green-600 text-white py-1 sm:py-2 px-3 sm:px-4 rounded"
                     >
-                        Yeni Günlük Ekle
+                        {!isMobile ? "Yeni Günlük Ekle" : ""} ➕
                     </button>
                 </div>
 
@@ -286,40 +319,60 @@ export default function Home() {
                         Henüz günlük yazmadın. Yeni bir günlük oluşturmak için butona tıklayabilirsin.
                     </p>
                 ) : (
-                    <ul className="space-y-4">
+                    <ul className="space-y-10">
                         {diaries.map((diary) => (
                             <li
-                                key={diary.id}
-                                className="border p-4 rounded shadow hover:shadow-md transition dark:border-gray-700"
+                                key={diary.diaryId}
+                                className="border p-2 rounded shadow-xl hover:shadow-lg transition dark:border-gray-700"
                             >
-                                <span
-                                    className={`
-          inline-block px-2 py-1 text-xs font-semibold rounded mb-2
-          ${diary.status === "public" ? "bg-green-100 text-green-800" :
-                                            diary.status === "private" ? "bg-yellow-100 text-yellow-800" :
-                                                diary.status === "onlyFollowers" ? "bg-gray-200 text-gray-800" :
-                                                    "bg-blue-100 text-blue-800"}
-        `}
-                                >
-                                    {diary.status}
-                                </span>
+                                {/* Etiket + Butonlar aynı satırda */}
+                                <div className="flex items-center justify-between flex-wrap gap-2 mb-3">
+                                    {/* Durum etiketi */}
+                                    <span
+                                        className={`
+        inline-block px-2 py-0 text-xs font-semibold rounded
+        ${diary.status === "public" ? "bg-green-100 text-green-800" :
+                                                diary.status === "private" ? "bg-yellow-100 text-yellow-800" :
+                                                    diary.status === "onlyFollowers" ? "bg-gray-200 text-gray-800" :
+                                                        "bg-blue-100 text-blue-800"}
+      `}
+                                        title={
+                                            diary.status === "public"
+                                                ? "Herkese Açık"
+                                                : diary.status === "private"
+                                                    ? "Gizli"
+                                                    : diary.status === "onlyFollowers"
+                                                        ? "Sadece Takipçilere"
+                                                        : "Bilinmeyen Durum"
+                                        }
+                                    >
+                                        {diary.status === "public" && "🌍"}
+                                        {diary.status === "private" && "🔒"}
+                                        {diary.status === "onlyFollowers" && "👥"}
+                                        {diary.status !== "public" && diary.status !== "private" && diary.status !== "onlyFollowers" && "❔"}
+                                    </span>
 
-                                <DiaryCard diary={diary} self={true} currentUsername={userProfile.username} />
-                                <div className="mt-3">
-                                    <button
-                                        onClick={() => navigate(`/edit/${diary.id}`)}
-                                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1 rounded mr-2"
-                                    >
-                                        Düzenle
-                                    </button>
-                                    <button
-                                        onClick={() => handleDeleteDiary(diary.id)}
-                                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-1 rounded"
-                                    >
-                                        Sil
-                                    </button>
+                                    {/* Butonlar */}
+                                    <div className="flex gap-2 ">
+                                        <button
+                                            onClick={() => navigate(`/edit/${diary.diaryId}`)}
+                                            className="w-auto  text-sm sm:text-base bg-indigo-500 hover:bg-indigo-600 text-white px-2 sm:px-4 py-1 rounded"
+                                        >
+                                            {!isMobile ? "Düzenle ✏️" : "✏️"}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteDiary(diary.diaryId)}
+                                            className="   text-xs text- sm:text-base bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded"
+                                        >
+                                            {!isMobile ? "Sil 🗑️" : "🗑️"}
+                                        </button>
+                                    </div>
                                 </div>
+
+                                {/* Günlük içeriği */}
+                                <DiaryCard diary={diary} self={true} currentUsername={userProfile.username} />
                             </li>
+
                         ))}
                     </ul>
 

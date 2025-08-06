@@ -84,17 +84,17 @@ export default function UserSearch() {
     }, [searchTerm]);
 
     return (
-        <div className="max-w-xl mx-auto p-6 bg-white rounded-xl shadow-md dark:bg-gray-800 dark:text-white">
+        <div className="  max-w-xl mx-auto p-3 my-4 bg-white rounded-xl shadow-md dark:bg-gray-800 dark:text-white">
             <div className="flex items-center justify-between mb-4">
-                <h1 className="text-2xl font-bold">Kullanıcı Ara</h1>
+                <h1 className="text-xl sm:text-2xl font-bold">Kullanıcı Ara</h1>
                 <Link to="/Dashboard">
-                    <button className="bg-blue-600 hover:bg-blue-900 text-white py-2 px-4 rounded">
+                    <button className="bg-blue-600 hover:bg-blue-900 text-white  py-1 sm:py-2 px-4 rounded">
                         Ana Sayfa
                     </button>
                 </Link>
             </div>
 
-            <div className="flex mb-4 gap-2">
+            <div className="flex mb-4 gap-2 h-10">
                 <input
                     type="text"
                     placeholder="Kullanıcı adı yaz..."

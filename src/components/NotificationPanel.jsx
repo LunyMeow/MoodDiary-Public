@@ -102,11 +102,13 @@ export default function NotificationPanel({ open, onClose }) {
                                             : "font-semibold text-black dark:text-white"
                                             }`}
                                     >
-                                        {n.type === "follow" && `Bir kullanıcı seni takip etmeye başladı: ${n.fromUsername}`}
-                                        {n.type === "unfollow" && `Bir kullanıcı takipten çıktı: ${n.fromUsername}`}
-                                        {n.type === "followRequest" && `Takip isteğin var: ${n.fromUsername}`}
-                                        {n.type === "follow_accepted" && `Takip isteği kabul edildi: ${n.fromUsername}`}
-                                        {n.type === "new_update" && `${n.fromUsername} Bir güncelleme paylaştı.`}
+                                        {n.type === "follow" && `👋 Bir kullanıcı seni takip etmeye başladı: ${n.fromUsername}`}
+                                        {n.type === "unfollow" && `🚶 Bir kullanıcı takipten çıktı: ${n.fromUsername}`}
+                                        {n.type === "followRequest" && `✋ Takip isteğin var: ${n.fromUsername}`}
+                                        {n.type === "follow_accepted" && `✅ Takip isteği kabul edildi: ${n.fromUsername}`}
+                                        {n.type === "new_update" && `✨ ${n.fromUsername} bir güncelleme paylaştı`}
+                                        {n.type === "like_diary" && `❤️ ${n.fromUsername} bir gönderini (${n.diaryStart}) beğendi`}
+                                        {n.type === "toxic_notify" && `⚠️ Hesabınızda çok fazla şiddet içeren günlükler tespit edildi. Hesabınız banlanabilir ve bütün günlükleriniz silinebilir, lütfen daha dikkatli olunuz.`}
                                         <br />
                                         <span className="text-xs text-gray-500">
                                             {n.timestamp?._seconds

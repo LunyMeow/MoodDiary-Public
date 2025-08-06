@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { getFirebaseFunctions , getFirebaseAuth } from "../services/firebase";
+import { getFirebaseFunctions, getFirebaseAuth } from "../services/firebase";
 import RedirectMessage from "../components/RedirectMessage";
 
 
@@ -17,8 +17,8 @@ export default function UserRelations() {
 
   const auth = getFirebaseAuth();
   if (!auth.currentUser) {
-      return <RedirectMessage />;
-    }
+    return <RedirectMessage />;
+  }
 
   // Backend fonksiyonları
   //const getUserRelations = httpsCallable(functions, 'getUserRelations');
@@ -28,7 +28,7 @@ export default function UserRelations() {
   useEffect(() => {
     const fetchRelations = async () => {
       try {
-        
+
         if (!auth.currentUser) {
           setError("Giriş yapmalısınız");
           setLoading(false);
@@ -156,7 +156,7 @@ export default function UserRelations() {
     }
   };
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md dark:bg-gray-800">
         <div className="flex items-center justify-center">
@@ -170,11 +170,19 @@ export default function UserRelations() {
 
   return (
     <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6 text-center">İlişkilerim</h1>
 
+
+<div className="flex gap-3">
+      <Link to="/Dashboard">
+        <button className="text-xs sm:text-lg   bg-blue-600 hover:bg-blue-900 text-white py-2 px-2 sm:px-4 rounded">
+          Ana Sayfa
+        </button>
+      </Link>
+      <h1 className="text-xl sm:text-2xl font-bold mb-6 text-center">İlişkilerim</h1>
+</div>
       {["following", "followers", "blocked"].map((field) => (
         <div key={field} className="mb-6">
-          <h2 className="text-xl font-semibold capitalize mb-2">
+          <h2 className="text-base sm:text-2xl font-semibold capitalize mb-2">
             {field === "following"
               ? "Takip Ettiklerim"
               : field === "followers"
@@ -183,7 +191,7 @@ export default function UserRelations() {
           </h2>
 
           {relations[field]?.length > 0 ? (
-            <ul className="space-y-2">
+            <ul className="space-y-1 text-sm sm:text-lg">
               {relations[field].map((user) => (
                 <li
                   key={user.uid}
@@ -196,7 +204,7 @@ export default function UserRelations() {
                     <img
                       src={user.photoUrl}
                       alt={user.username}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className=" w-8 h-8 sm:w-12 sm:h-12 rounded-full object-cover"
                     />
                     <div>
                       <p className="font-semibold text-indigo-600 dark:text-indigo-400">
@@ -215,7 +223,7 @@ export default function UserRelations() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
               Hiç kullanıcı yok.
             </p>
           )}
@@ -223,7 +231,7 @@ export default function UserRelations() {
       ))}
 
       <div className="mb-6">
-        <h2 className="text-xl font-semibold capitalize mb-2">Takip İstekleri</h2>
+        <h2 className="text-lg sm:text-2xl font-semibold capitalize mb-2">Takip İstekleri</h2>
         {relations.followRequests?.length > 0 ? (
           <ul className="space-y-2">
             {relations.followRequests.map((user) => (
@@ -255,17 +263,13 @@ export default function UserRelations() {
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
             Bekleyen istek yok.
           </p>
         )}
       </div>
 
-      <Link to="/Dashboard">
-        <button className="bg-blue-600 hover:bg-blue-900 text-white py-2 px-4 rounded">
-          Ana Sayfa
-        </button>
-      </Link>
+
     </div>
   );
 }

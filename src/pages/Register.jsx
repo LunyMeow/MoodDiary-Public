@@ -2,10 +2,9 @@ import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { httpsCallable } from "firebase/functions";
-import { getFirebaseAuth, getFirebaseFunctions } from "../services/firebase";
+import { getFirebaseAuth, getFirebaseFunctions, signInWithGoogle } from "../services/firebase";
 
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 
 
 export default function Register() {
@@ -45,10 +44,17 @@ export default function Register() {
 
       if (result.success) {
         // Kayıt başarılıysa, otomatik giriş yap
-        await signInWithEmailAndPassword(auth, data.email, data.password);
+        const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+        const user = userCredential.user;
 
+        // E-posta doğrulama gönder
+        await sendEmailVerification(user);
         // Yönlendirme
-        navigate(result.redirectUrl);
+        setError("Kayıt başarılı. Lütfen size gönderilen e-posta ile hesabınızı adresinizi onaylayınız.");
+
+        setTimeout(() => {
+          navigate(result.redirectUrl);
+        }, 4000); // 4 saniye
       } else {
         throw new Error('Kayıt sırasında hata oluştu.');
       }
@@ -89,7 +95,6 @@ export default function Register() {
           <input
             type="text"
             {...register("username", {
-              required: "Kullanıcı adı zorunludur",
               minLength: {
                 value: 3,
                 message: "En az 3 karakter olmalı"
@@ -172,6 +177,110 @@ export default function Register() {
           {loading ? "Oluşturuluyor..." : "Hesap Oluştur"}
         </button>
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <button
+          type="button"
+          onClick={async () => {
+            setError("");
+            setLoading(true);
+
+            // Formdan username ve fullname'i al
+            const username = document.querySelector('input[name="username"]')?.value.trim();
+            const fullname = document.querySelector('input[name="fullname"]')?.value.trim();
+
+
+
+            try {
+              // Google ile giriş
+              const { user } = await signInWithGoogle();
+
+              // Backend'e POST isteği gönder
+              const response = await fetch("https://registeruser-skz3ms2laq-uc.a.run.app", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  email: user.email,
+                  fullname,
+                  username,
+                  provider: "google",
+                }),
+              });
+
+              if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Kayıt başarısız.");
+              }
+
+              const result = await response.json();
+              navigate(result.redirectUrl); // Örn: /Profile
+
+            } catch (err) {
+              console.error("Google ile kayıt hatası:", err);
+              setError(err.message || "Google ile kayıt sırasında hata oluştu.");
+            } finally {
+              setLoading(false);
+            }
+          }}
+          className=" bg-red-500 hover:bg-red-600 text-white w-full py-2 mt-4 rounded transition"
+        >
+
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 48 48"
+            className="w-5 h-5 inline-block align-middle mr-2"
+          >
+            <path
+              fill="#FFC107"
+              d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.5-5.8 7.5-11.3 7.5-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.3 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.5-.4-3.5z"
+            />
+            <path
+              fill="#FF3D00"
+              d="M6.3 14.7l6.6 4.8C14.2 16.2 18.7 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.1 6.3 29.3 4 24 4c-7.6 0-14.1 4.1-17.7 10.2z"
+            />
+            <path
+              fill="#4CAF50"
+              d="M24 44c5.2 0 10-2 13.6-5.2l-6.3-5.3C29.8 35.5 27 36.5 24 36.5c-5.4 0-9.9-3-11.5-7.5l-6.5 5C9.9 39.7 16.5 44 24 44z"
+            />
+            <path
+              fill="#1976D2"
+              d="M43.6 20.5H42V20H24v8h11.3c-.9 2.5-2.6 4.6-4.7 6.1l6.3 5.3c-1.8 1.7-4 3.1-6.5 4.1 2.4-.8 4.7-2.1 6.5-4.1l6.3-5.3c2.4-2.6 3.9-6.1 3.9-10.1 0-1.2-.1-2.5-.4-3.5z"
+            />
+          </svg>
+           Google ile Kayıt Ol
+        </button>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
           Zaten bir hesabınız var mı?{" "}
           <Link
@@ -181,6 +290,7 @@ export default function Register() {
             Giriş Yap
           </Link>
         </p>
+
       </form>
     </div>
   );

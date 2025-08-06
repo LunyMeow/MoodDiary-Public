@@ -131,15 +131,6 @@ export default function ProfileSettings() {
 
 
 
-
-
-
-
-
-
-
-
-
   const onSubmit = async (data) => {
     if (submitting) return; // ✅ Çoklu submit önlemi
 
@@ -190,7 +181,7 @@ export default function ProfileSettings() {
       // Şifre ve email alanlarını temizle
       setValue("newEmail", "");
       setValue("newPassword", "");
-
+      navigate("/Dashboard")
     } catch (err) {
       console.error("Profil güncelleme hatası:", err);
       setError(err.message || "Profil güncellenirken bir hata oluştu.");
@@ -211,8 +202,8 @@ export default function ProfileSettings() {
   }
 
   return (
-    <div className="max-w-md mx-auto p-6 bg-white rounded shadow-md dark:bg-gray-800">
-      
+    <div className="max-w-md mx-auto p-2 sm:p-5 bg-white rounded shadow-md dark:bg-gray-800">
+
       <h2 className="text-xl font-bold mb-4 text-center text-indigo-600 dark:text-indigo-400">
         Profil Ayarları
       </h2>
@@ -435,14 +426,17 @@ export default function ProfileSettings() {
         </button>
       </form>
       <div className="flex justify-center gap-4 mt-6">
-        <Link to="/Dashboard">
-          <button className={`w-full py-2 rounded transition-colors ${submitting
-            ? 'bg-gray-400 cursor-not-allowed'
-            : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}>
-            Ana Sayfa
-          </button>
-        </Link>
+        {profile.username &&
+          <Link to="/Dashboard">
+            <button className={`w-full py-2 rounded transition-colors ${submitting
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+              }`}>
+              Ana Sayfa
+            </button>
+          </Link>
+        }
+
         <Link to="/MyInterests">
           <button className={`w-full py-2 rounded transition-colors ${submitting
             ? 'bg-gray-400 cursor-not-allowed'

@@ -16,6 +16,9 @@ export default function UserProfile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [showMenu, setShowMenu] = useState(false);
+
+
   // Backend fonksiyonu
   //const getUserProfileData = httpsCallable(functions, 'getUserProfileData');
   if (!auth.currentUser) {
@@ -71,6 +74,51 @@ export default function UserProfile() {
 
     fetchProfileData();
   }, [username, currentUser]);
+
+
+
+
+
+
+
+
+  const handleReportUser = async () => {
+    setShowMenu(false);
+    const confirm = window.confirm("Bu kullanıcıyı kötüye kullanım nedeniyle rapor etmek istediğinize emin misiniz?");
+    if (!confirm) return;
+
+    try {
+      const idToken = await auth.currentUser.getIdToken();
+      const res = await fetch("https://reportusertoxicity-skz3ms2laq-uc.a.run.app", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          targetUsername: user.username
+        })
+      });
+
+      const result = await res.json();
+      if (result.success) {
+        alert("Raporunuz işleme alındı.");
+      } else {
+        alert("Raporlama başarısız oldu: " + result.message);
+      }
+    } catch (err) {
+      console.error("Raporlama hatası:", err);
+      alert("Raporlama sırasında bir hata oluştu.");
+    }
+  };
+
+
+
+
+
+
+
+
 
   const handleFollowAction = async (action) => {
     setLoading(true);
@@ -161,23 +209,56 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-400 to-indigo-700 p-2 sm:p-6 dark:from-black dark:to-gray-800">
-      <div className=" flex max-w-3xl mx-auto bg-white p-6 rounded-xl shadow-md mb-6 dark:bg-gray-800 ">
+      <div className=" space-x-2  flex justify-between max-w-3xl mx-auto bg-white px-2 py-4 sm:p-5 rounded-xl shadow-md mb-5 dark:bg-gray-800">
         <Link to="/Dashboard">
           <button className="bg-blue-600 hover:bg-blue-900 text-white py-2 px-4 rounded">
             Ana Sayfa
           </button>
         </Link>
+
+        {user.isSelf ? (
+          <Link
+            to="/Profile"
+            className="bg-green-500 hover:bg-green-600 text-white py-2 px-2 rounded"
+          >
+            Profilim ve Ayarlar
+          </Link>
+        ) : (
+          <div className="relative">
+            <button
+              className="text-l text-gray-600 hover:text-black dark:text-white"
+              onClick={() => setShowMenu(!showMenu)}
+            >
+              ☰
+            </button>
+            {showMenu && (
+              <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-700 border rounded shadow">
+                <button
+                  onClick={handleReportUser}
+                  className="block w-full text-left px-2 py-2 text-red-600 hover:bg-red-100 dark:hover:bg-gray-600"
+                >
+                  Kullanıcıyı Raporla
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
+
+
+
+
+
 
       <div className="max-w-3xl mx-auto bg-white p-2 sm:p-6 rounded-xl shadow-lg dark:bg-gray-800">
         <div className="flex flex-wrap gap-4 mb-4 w-full sm:w-auto">
           <img
             src={user.photoUrl}
-            className="w-20 h-20 rounded-full"
+            className="w-20 rounded-full"
             alt="Profil"
           />
-          <h1 className="text-2xl font-bold text-indigo-800 dark:text-white">
-            {user.fullname}
+          <h1 className="text-xl  sm:text-2xl font-bold text-indigo-800 dark:text-white">
+            {user.fullname || user.username}
             {user.isSelf && "(Sen)"}
           </h1>
 
@@ -197,25 +278,25 @@ export default function UserProfile() {
           </div>
 
           {!user.isSelf && (
-            <div className="flex gap-4 mb-4">
+            <div className="flex gap-4 mb-2 text-sm sm:text-lg">
               {relations.isFollowing ? (
                 <button
                   onClick={() => handleFollowAction('unfollow')}
-                  className="bg-gray-400 hover:bg-gray-500 text-white px-4 py-1 rounded"
+                  className="bg-gray-400 hover:bg-gray-500 text-white px-2 sm:px-4 py-1 rounded"
                 >
                   Takipten Çık
                 </button>
               ) : relations.isRequestedByYou ? (
                 <button
                   onClick={() => handleFollowAction('unfollow')}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-1 rounded"
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-2 sm:px-4 py-1 rounded"
                 >
                   İsteği Geri Çek
                 </button>
               ) : (
                 <button
                   onClick={() => handleFollowAction('follow')}
-                  className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1 rounded"
+                  className="bg-blue-500 hover:bg-blue-600 text-white px-2 sm:px-4 py-1 rounded"
                 >
                   Takip Et
                 </button>
@@ -242,6 +323,8 @@ export default function UserProfile() {
               )}
             </div>
           )}
+
+
         </div>
 
         <h2 className="text-xl font-semibold text-gray-700 dark:text-white mb-4">
@@ -253,9 +336,9 @@ export default function UserProfile() {
             {user.isSelf ? "Henüz günlük paylaşmadınız." : "Bu kullanıcı henüz herkese açık günlük paylaşmamış."}
           </p>
         ) : (
-          <ul className="space-y-4">
+          <ul className="space-y-6">
             {diaries.map((diary) => (
-              <li key={diary.id} className="border p-4 rounded shadow bg-white dark:bg-gray-700 dark:text-white">
+              <li key={diary.diaryId} className="border p-2 rounded shadow bg-white dark:bg-gray-700 dark:text-white">
                 <DiaryCard diary={diary} currentUsername={profileData.relations.currentUsername} />
               </li>
             ))}
