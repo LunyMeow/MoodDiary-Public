@@ -1,6 +1,6 @@
 # MoodDiary - React Tabanlı Duygu Günlüğü Uygulaması
 
-Take a Look > https://mooddiary.me
+Take a Look > ~~https://mooddiary.me~~
 
 ## 🎯 Proje Amacı
 
