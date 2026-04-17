@@ -66,3 +66,22 @@ Eğer proje hakkında geri bildirimde bulunmak isterseniz ya da bir konuda konu�
 > Teşekkürler!  
 > - Bedirhan Alparslan
 
+
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/1.png" width="250"/>
+  <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/2.png" width="250"/>
+    <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/2.1.png" width="250"/>
+
+  <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/3.png" width="250"/>
+    <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/4.png" width="250"/>
+      <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/5.png" width="250"/>
+  <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/8.png" width="250"/>
+    <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/10.png" width="250"/>
+    <img src="https://raw.githubusercontent.com/LunyMeow/MoodDiary-Public/main/ScreenShots/mooddiary.me_Profile.png" width="250"/>
+
+
+
+</p>
